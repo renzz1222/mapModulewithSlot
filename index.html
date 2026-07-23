@@ -13,92 +13,199 @@
 <style>
 body {
     margin: 0;
+    padding: 15px;
+    box-sizing: border-box;
+    background: #f4f4f4;
+    font-family: Arial, Helvetica, sans-serif;
+
     display: flex;
     justify-content: center;
 }
 
+*{
+    box-sizing: border-box;
+}
+
 .mainComponent{
-  margin:0;
-  width: 40%;
-  height: 90vh;
+    width:100%;
+    max-width:650px;
+    height:95vh;
+
+    background:#fff;
+    border-radius:10px;
+    overflow:hidden;
+
+    display:flex;
+    flex-direction:column;
 }
 
 #searchMap{
-  width: 100%;
-  height: 5%;
-  border: 1px solid #D9D9D9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    width:100%;
+    min-height:55px;
+    border:1px solid #D9D9D9;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:10px;
 }
+
 #searchMaps{
-  width: 100%;
-  height: 60%;
-  border: 1px solid #D9D9D9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    width:100%;
+    flex:1;
+    min-height:300px;
+    border:1px solid #D9D9D9;
 }
 
 #searchedUsers{
-  width: 100%;
-  border: 1px solid #D9D9D9;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    width:100%;
+    border:1px solid #D9D9D9;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+    overflow-y:auto;
+    max-height:250px;
 }
 
 #deadBody{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 90%;
-  justify-content: space-between;
-  
+    width:95%;
+    padding:10px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    gap:10px;
+    border-bottom:1px solid #eee;
+}
+
+#deadBody:last-child{
+    border-bottom:none;
 }
 
 #deadBody button{
-  border: 0px;
-  height: 30px;
-  border-radius: 10px;
-  color: white;
+    min-width:95px;
+    height:38px;
 
-  background-color: #3D26C7;
+    border:none;
+    border-radius:8px;
+
+    color:white;
+    background:#3D26C7;
+
+    cursor:pointer;
+    transition:.2s;
+}
+
+#deadBody button:hover{
+    background:#2e1ca4;
 }
 
 #search{
-  width: 95%;
-  height: 60%;
-  border: 1px solid #D9D9D9;
-  border-radius: 3px;
-  margin: 0;
+    width:100%;
+    height:40px;
+
+    border:1px solid #D9D9D9;
+    border-radius:5px;
+
+    padding:0 12px;
+    outline:none;
 }
 
 #deadInfo{
-    width: 50%;
+    width:100%;
 }
 
 #deadinfoCol1{
-  display: flex;
+    display:flex;
 }
 
 #deadinfoCol1 p{
-  margin-bottom: 0;
+    margin:0;
+    font-weight:bold;
 }
+
 #deadinfoCol2{
-  display: flex;
-  flex-direction: row;
-  font-size: 10px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    font-size:12px;
 }
 
 #deadinfoCol2 p{
-  margin-top: 0px;
-  margin-right: 10px;
+    margin:5px 0 0;
 }
 
-#map {
-    width: 99%;
-    height: 100%;
+#map{
+    width:100%;
+    height:100%;
+}
+
+.leaflet-routing-container{
+    display:none !important;
+}
+
+
+
+@media (max-width:768px){
+
+    body{
+        padding:10px;
+    }
+
+    .mainComponent{
+        max-width:100%;
+        height:95vh;
+    }
+
+    #searchedUsers{
+        max-height:220px;
+    }
+
+}
+
+
+@media (max-width:480px){
+
+    body{
+        padding:0;
+    }
+
+    .mainComponent{
+        width:100%;
+        height:100vh;
+        border-radius:0;
+    }
+
+    #searchMap{
+        min-height:60px;
+    }
+
+    #search{
+        height:42px;
+    }
+
+    #deadBody{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    #deadBody button{
+        width:100%;
+    }
+
+    #searchedUsers{
+        max-height:200px;
+    }
+
+    #deadinfoCol2{
+        flex-direction:column;
+        gap:0;
+    }
+
 }
 
 .leaflet-routing-container {
@@ -252,7 +359,6 @@ fetch("cherubim.json")
 
         style: function(feature) {
 
-          
             if(feature.geometry.type === "LineString"){
                 return {
                     color: "#555",
@@ -260,7 +366,6 @@ fetch("cherubim.json")
                 };
             }
 
-            
             const occupied = users.some(user => user.id === feature.properties.id);
 
             return {
