@@ -252,7 +252,7 @@ fetch("cherubim.json")
 
         style: function(feature) {
 
-            // Draw roads
+          
             if(feature.geometry.type === "LineString"){
                 return {
                     color: "#555",
@@ -260,7 +260,7 @@ fetch("cherubim.json")
                 };
             }
 
-            // Check if this lot is occupied
+            
             const occupied = users.some(user => user.id === feature.properties.id);
 
             return {
