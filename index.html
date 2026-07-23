@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cherubim Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
+
+
+
+<style>
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.mainComponent{
+  margin:0;
+  width: 40%;
+  height: 90vh;
+}
+
+#searchMap{
+  width: 100%;
+  height: 5%;
+  border: 1px solid #D9D9D9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#searchMaps{
+  width: 100%;
+  height: 60%;
+  border: 1px solid #D9D9D9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#searchedUsers{
+  width: 100%;
+  border: 1px solid #D9D9D9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#deadBody{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 90%;
+  justify-content: space-between;
+  
+}
+
+#deadBody button{
+  border: 0px;
+  height: 30px;
+  border-radius: 10px;
+  color: white;
+
+  background-color: #3D26C7;
+}
+
+#search{
+  width: 95%;
+  height: 60%;
+  border: 1px solid #D9D9D9;
+  border-radius: 3px;
+  margin: 0;
+}
+
+#deadInfo{
+    width: 50%;
+}
+
+#deadinfoCol1{
+  display: flex;
+}
+
+#deadinfoCol1 p{
+  margin-bottom: 0;
+}
+#deadinfoCol2{
+  display: flex;
+  flex-direction: row;
+  font-size: 10px;
+}
+
+#deadinfoCol2 p{
+  margin-top: 0px;
+  margin-right: 10px;
+}
+
+#map {
+    width: 99%;
+    height: 100%;
+}
+
+.leaflet-routing-container {
+    display: none !important;
+}
+
+</style>
+</head>
+<body>
+
+<div class="mainComponent">
+  <div id="searchMap">
+  <p>Cherubim Memorial Services</p>
+  
+  </div>
+  <div id="searchMap">
+  <input id="search" type="text" placeholder="Search grave">
+  </div>
+
+  <div id="searchMaps">
+    <div id="map"></div>
+  </div>
+
+  <p>Deceased: </p>
+  <div id="searchedUsers">
+
+    <div id="deadBody">
+      <div id="deadInfo">
+
+        <div id="deadinfoCol1">
+  
+        </div>
+        <div id="deadinfoCol2">
+     
+        </div>
+
+      </div>
+     
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+<script>
+
+function getUsers() {
+    return JSON.parse(localStorage.getItem("users")) || [];
+} 
+
+
+var fakeLat = 14.8391018;
+var fakeLng = 120.7595918; 
+
+
+
+const searchUser = document.getElementById("search");
+const searchedUsers = document.getElementById("searchedUsers");
+
+searchUser.addEventListener("keydown", function(e) {
+
+    if (e.key !== "Enter") return;
+
+    const users = getUsers();   // <-- Read from localStorage
+
+    const search = this.value.toLowerCase();
+
+    const filteredUsers = users.filter(user =>
+        user.name.toLowerCase().includes(search) ||
+        user.deceased.toLowerCase().includes(search)
+    );
+
+    searchedUsers.innerHTML = filteredUsers.map(user => `
+        <div id="deadBody">
+
+            <div id="deadInfo">
+
+                <div id="deadinfoCol1">
+                    <p>${user.name}</p>
+                </div>
+
+                <div id="deadinfoCol2">
+                    <p>Deceased: ${user.deceased}</p>
+                    <p>Lot: ${user.id}</p>
+                </div>
+
+            </div>
+
+            <button onclick="navigateTo(${user.latitude}, ${user.longitude})">
+                Navigate
+            </button>
+
+        </div>
+    `).join("");
+
+});
+
+
+const map = L.map('map', {
+    zoomControl: true,
+    maxZoom: 22
+}).setView([14.83804, 120.76095], 19);
+
+L.tileLayer(
+    'https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg',
+    {
+        minZoom: 0,
+        maxZoom: 20,
+        attribution: 'NEEGASAURUS'
+    }
+).addTo(map);
+
+L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+    maxZoom: 22
+}).addTo(map);
+
+let routingControl = null;
+
+function navigateTo(lat, lng) {
+
+  if (routingControl) {
+    map.removeControl(routingControl);
+  }
+
+  routingControl = L.Routing.control({
+    waypoints: [
+      L.latLng(fakeLat, fakeLng),
+      L.latLng(lat, lng)          
+    ],
+     createMarker: function(i, wp) {
+        return L.marker(wp.latLng, {
+            icon: marketIcon
+        });
+    },
+    routeWhileDragging: false,
+    addWaypoints: false,
+    draggableWaypoints: false,
+    fitSelectedRoutes: true,
+  }).addTo(map);
+}
+
+fetch("cherubim.json")
+.then(response => response.json())
+.then(data => {
+
+    const users = getUsers();
+
+    const geoLayer = L.geoJSON(data, {
+
+        style: function(feature) {
+
+            // Draw roads
+            if(feature.geometry.type === "LineString"){
+                return {
+                    color: "#555",
+                    weight: 3
+                };
+            }
+
+            // Check if this lot is occupied
+            const occupied = users.some(user => user.id === feature.properties.id);
+
+            return {
+                color: "#000",
+                weight: 1,
+                fillColor: occupied ? "#ff0000" : "#00ff66",
+                fillOpacity: 0.6
+            };
+        },
+
+        onEachFeature: function(feature, layer){
+
+            if(feature.geometry.type !== "Polygon") return;
+
+            layer.on("click", function(){
+
+                const center = layer.getBounds().getCenter();
+
+                const current = getUsers().find(u => u.id === feature.properties.id);
+
+                layer.bindPopup(`
+                    <h3>Lot ${feature.properties.id}</h3>
+
+                    <input
+                        id="name"
+                        placeholder="Owner Name"
+                        value="${current?.name || ""}"
+                        style="width:100%;margin-bottom:5px;"
+                    >
+
+                    <input
+                        id="deceased"
+                        placeholder="Deceased Name"
+                        value="${current?.deceased || ""}"
+                        style="width:100%;margin-bottom:10px;"
+                    >
+
+                    <button onclick="saveUser(${feature.properties.id}, ${center.lat}, ${center.lng})">
+                        Save
+                    </button>
+                `).openPopup();
+
+            });
+
+        }
+
+    }).addTo(map);
+
+    map.fitBounds(geoLayer.getBounds());
+
+});
+
+function saveUser(id, lat, lng){
+  console.log(id, lat, lng);
+    let users = getUsers();
+    const name = document.getElementById("name").value;
+    const deceased = document.getElementById("deceased").value;
+
+    if(!name || !deceased){
+        alert("Complete all fields.");
+        return;
+    }
+
+    const existing = users.find(user => user.id === id);
+
+    if(existing){
+
+        existing.name = name;
+        existing.deceased = deceased;
+        existing.latitude = lat;
+        existing.longitude = lng;
+
+    }else{
+
+        users.push({
+            id,
+            name,
+            deceased,
+            latitude: lat,
+            longitude: lng
+        });
+
+    }
+
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Saved!");
+    location.reload();
+
+}
+console.log(getUsers());
+
+   const marketIcon = L.icon({
+        iconUrl: "map.png",
+        iconSize: [32, 32],
+        iconAnchor: [16, 32]
+    });
+
+    L.marker([14.8380978, 120.7608224], {
+        icon: marketIcon
+    })
+    .addTo(map)
+    .bindPopup("<b>Angel Michael St.</b><br>APARTMENT Phase 1");
+
+    L.marker([ 14.8391018, 120.7595918], {
+        icon: marketIcon
+    }) .addTo(map)    .bindPopup("<b>YOU ARE IN ENTRANCE FROM CHERUBIM</b>");
+
+
+
+
+    
+</script>
+
+</body>
+</html>
